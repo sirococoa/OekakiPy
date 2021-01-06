@@ -1,3 +1,5 @@
+import socket
+
 import pyxel
 
 WINDOW_SIZE = 256
@@ -9,11 +11,16 @@ class App:
         self.canvas = [[0 for _ in range(WINDOW_SIZE)] for _ in range(WINDOW_SIZE)]
         self.new_paint = []
         self.color = 7
+        self.s = socket.socket()
+        self.s.connect((socket.gethostname(), 1234))
+        self.send_data_id = 0
         pyxel.run(self.update, self.draw)
 
     def update(self):
         if pyxel.btn(pyxel.MOUSE_LEFT_BUTTON):
             self.new_paint.append((pyxel.mouse_x, pyxel.mouse_y, self.color))
+            self.s.send(bytes(' '.join(map(str, (self.send_data_id, pyxel.mouse_x, pyxel.mouse_y, self.color))), 'utf-8'))
+            self.send_data_id += 1
 
     def draw(self):
         for x in range(WINDOW_SIZE):
