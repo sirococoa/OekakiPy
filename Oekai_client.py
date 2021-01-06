@@ -13,21 +13,38 @@ class App:
         self.color = 7
         self.s = socket.socket()
         self.s.connect((socket.gethostname(), 1234))
+        self.s.setblocking(False)
         self.send_data_id = 0
+        self.recv_data = ''
         pyxel.run(self.update, self.draw)
 
     def update(self):
         if pyxel.btn(pyxel.MOUSE_LEFT_BUTTON):
-            self.new_paint.append((pyxel.mouse_x, pyxel.mouse_y, self.color))
+            self.new_paint.append((self.send_data_id, pyxel.mouse_x, pyxel.mouse_y, self.color))
             self.s.send(bytes(' '.join(map(str, (self.send_data_id, pyxel.mouse_x, pyxel.mouse_y, self.color))), 'utf-8'))
+            self.s.send(b'\r\n')
             self.send_data_id += 1
+            print(len(self.new_paint))
+        try:
+            self.recv_data += str(self.s.recv(1024), 'utf-8')
+            print("recv", self.recv_data)
+            data = self.recv_data[:self.recv_data.rfind('\n')]
+            self.recv_data = self.recv_data[self.recv_data.rfind('\n')+1:]
+            for c in data.rstrip().split('\n'):
+                flag = c[0]
+                id = int(c[1:])
+                print("delete", id)
+                if flag == "s":
+                    self.new_paint = [p for p in self.new_paint if p[0] != id]
+        except BlockingIOError:
+            pass
 
     def draw(self):
         for x in range(WINDOW_SIZE):
             for y in range(WINDOW_SIZE):
                 pyxel.pset(x, y, self.canvas[x][y])
         for p in self.new_paint:
-            pyxel.pset(*p)
+            pyxel.pset(*p[1:])
 
 
 if __name__ == '__main__':
