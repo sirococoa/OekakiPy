@@ -1,8 +1,11 @@
 from collections import deque
+import itertools
 
 from twisted.internet import reactor, task
 from twisted.internet.protocol import Factory
 from twisted.protocols.basic import LineReceiver
+
+WINDOW_SIZE = 256
 
 
 class OekakiServer(LineReceiver):
@@ -26,6 +29,7 @@ class OekakiServer(LineReceiver):
 class OekakiFactory(Factory):
     def __init__(self):
         self.clients = []
+        self.canvas = [[0 for _ in range(WINDOW_SIZE)] for _ in range(WINDOW_SIZE)]
         self.paint_que = deque()
         self.lc = task.LoopingCall(self.loop_process)
         self.lc.start(0.1)
@@ -33,6 +37,7 @@ class OekakiFactory(Factory):
     def loop_process(self):
         while self.paint_que:
             painter, id, x, y, color = self.paint_que.popleft()
+            self.canvas[x][y] = color
             for client in self.clients:
                 if client == painter:
                     client.sendLine(bytes('conf ' + str(id), 'utf-8'))
@@ -41,6 +46,7 @@ class OekakiFactory(Factory):
 
     def clientConnectionMade(self, client):
         self.clients.append(client)
+        client.sendLine(bytes(' '.join(map(str, itertools.chain.from_iterable(self.canvas))), 'utf-8'))
 
     def clientConnectionLost(self, client):
         self.clients.remove(client)

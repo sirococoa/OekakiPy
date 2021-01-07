@@ -17,6 +17,7 @@ class App:
         self.s.setblocking(False)
         self.send_data_id = 0
         self.recv_data = ''
+        self.load_canvas()
         pyxel.run(self.update, self.draw)
 
     def update(self):
@@ -54,6 +55,21 @@ class App:
                 pyxel.pset(x, y, self.canvas[x][y])
         for p in self.new_paint:
             pyxel.pset(*p[1:])
+
+    def load_canvas(self):
+        load_success = False
+        while not load_success:
+            try:
+                self.recv_data += str(self.s.recv(1024), 'utf-8')
+                if '\n' in self.recv_data:
+                    data = self.recv_data[:self.recv_data.find('\n')]
+                    self.recv_data = self.recv_data[self.recv_data.find('\n') + 1:]
+                    load_success = True
+                    data = data.split(' ')
+                    for i in range(WINDOW_SIZE):
+                        self.canvas[i] = data[WINDOW_SIZE*i:WINDOW_SIZE*(i+1)+1]
+            except BlockingIOError:
+                pass
 
 
 if __name__ == '__main__':
