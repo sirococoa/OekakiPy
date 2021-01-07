@@ -8,6 +8,7 @@ WINDOW_SIZE = 256
 class App:
     def __init__(self):
         pyxel.init(WINDOW_SIZE, WINDOW_SIZE)
+        pyxel.mouse(True)
         self.canvas = [[0 for _ in range(WINDOW_SIZE)] for _ in range(WINDOW_SIZE)]
         self.new_paint = []
         self.color = 7
@@ -30,12 +31,20 @@ class App:
             print("recv", self.recv_data)
             data = self.recv_data[:self.recv_data.rfind('\n')]
             self.recv_data = self.recv_data[self.recv_data.rfind('\n')+1:]
-            for c in data.rstrip().split('\n'):
-                flag = c[0]
-                id = int(c[1:])
-                print("delete", id)
-                if flag == "s":
+            for line in data.rstrip().split('\n'):
+                line = line.split(' ')
+                if line[0] == 'conf':
+                    id = int(line[1])
+                    print("delete", id)
+                    for i, x, y, c in self.new_paint:
+                        if i == id:
+                            self.canvas[x][y] = c
                     self.new_paint = [p for p in self.new_paint if p[0] != id]
+                elif line[0] == 'draw':
+                    x, y, c = map(int, line[1:])
+                    self.canvas[x][y] = c
+                else:
+                    raise ValueError
         except BlockingIOError:
             pass
 

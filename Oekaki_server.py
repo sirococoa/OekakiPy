@@ -6,9 +6,9 @@ from twisted.protocols.basic import LineReceiver
 
 
 class OekakiServer(LineReceiver):
-    def __init__(self):
+    def __init__(self, paint_que):
         super().__init__()
-        self.paint_que = deque()
+        self.paint_que = paint_que
 
     def connectionMade(self):
         print("接続受付", self.transport.client)
@@ -20,32 +20,35 @@ class OekakiServer(LineReceiver):
 
     def lineReceived(self, line):
         print(line)
-        self.paint_que.append(tuple(map(int, str(line, 'utf-8').split(' '))))
-
-    def confirm_paint(self):
-        while self.paint_que:
-            id, x, y, color = self.paint_que.popleft()
-            print("delete", id)
-            self.sendLine(bytes('s' + str(id), 'utf-8'))
+        self.paint_que.append((self, ) + tuple(map(int, str(line, 'utf-8').split(' '))))
 
 
 class OekakiFactory(Factory):
-    protocol = OekakiServer
-
     def __init__(self):
         self.clients = []
+        self.paint_que = deque()
         self.lc = task.LoopingCall(self.loop_process)
         self.lc.start(0.1)
 
     def loop_process(self):
-        for client in self.clients:
-            client.confirm_paint()
+        while self.paint_que:
+            painter, id, x, y, color = self.paint_que.popleft()
+            for client in self.clients:
+                if client == painter:
+                    client.sendLine(bytes('conf ' + str(id), 'utf-8'))
+                else:
+                    client.sendLine(bytes('draw ' + " ".join(map(str, (x, y, color))), 'utf-8'))
 
     def clientConnectionMade(self, client):
         self.clients.append(client)
 
     def clientConnectionLost(self, client):
         self.clients.remove(client)
+
+    def buildProtocol(self, addr):
+        protocol = OekakiServer(self.paint_que)
+        protocol.factory = self
+        return protocol
 
 
 factory = OekakiFactory()
