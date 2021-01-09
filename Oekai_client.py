@@ -25,7 +25,8 @@ class App:
         self.new_paint = []
         self.color = 7
         self.s = socket.socket()
-        self.s.connect((socket.gethostname(), 1234))
+        host = socket.gethostname()
+        self.s.connect((host, 1234))
         self.s.setblocking(False)
         self.send_data_id = 0
         self.recv_data = ''
