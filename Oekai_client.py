@@ -26,7 +26,15 @@ class App:
         self.color = 7
         self.s = socket.socket()
         host = socket.gethostname()
-        self.s.connect((host, 1234))
+        port = 1234
+        with open('setting.txt', 'r') as f:
+            for line in f:
+                data = line.split('=')
+                if data[0] == 'HOSTNAME':
+                    host = int(data[1])
+                if data[0] == 'PORT':
+                    port = int(data[1])
+        self.s.connect((host, port))
         self.s.setblocking(False)
         self.send_data_id = 0
         self.recv_data = ''

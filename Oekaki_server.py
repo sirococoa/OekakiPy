@@ -88,5 +88,12 @@ class OekakiFactory(Factory):
 
 factory = OekakiFactory()
 
+port = 1234
+with open('setting.txt', 'r') as f:
+    for line in f:
+        data = line.split('=')
+        if data[0] == 'PORT':
+            port = int(data[1])
+
 reactor.listenTCP(1234, factory)
 reactor.run()
