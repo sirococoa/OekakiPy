@@ -29,9 +29,9 @@ class App:
         port = 1234
         with open('setting.txt', 'r') as f:
             for line in f:
-                data = line.split('=')
+                data = line.rstrip().split('=')
                 if data[0] == 'HOSTNAME':
-                    host = int(data[1])
+                    host = data[1]
                 if data[0] == 'PORT':
                     port = int(data[1])
         self.s.connect((host, port))
