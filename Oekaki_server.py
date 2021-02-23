@@ -83,7 +83,7 @@ class OekakiFactory(Factory):
 
     @classmethod
     def init_canvas(cls):
-        return [[0 for _ in range(WINDOW_SIZE)] for _ in range(WINDOW_SIZE)]
+        return [[0 for _ in range(WINDOW_SIZE + 1)] for _ in range(WINDOW_SIZE + 1)]
 
 
 factory = OekakiFactory()
@@ -95,5 +95,5 @@ with open('setting.txt', 'r') as f:
         if data[0] == 'PORT':
             port = int(data[1])
 
-reactor.listenTCP(1234, factory)
+reactor.listenTCP(port, factory)
 reactor.run()

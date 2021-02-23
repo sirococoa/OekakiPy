@@ -21,7 +21,7 @@ class App:
 
     def __init__(self):
         pyxel.init(WINDOW_SIZE, WINDOW_SIZE)
-        self.canvas = [[0 for _ in range(WINDOW_SIZE)] for _ in range(WINDOW_SIZE)]
+        self.canvas = [[0 for _ in range(WINDOW_SIZE + 1)] for _ in range(WINDOW_SIZE + 1)]
         self.new_paint = []
         self.color = 7
         self.s = socket.socket()
@@ -31,15 +31,15 @@ class App:
             for line in f:
                 data = line.rstrip().split('=')
                 if data[0] == 'HOSTNAME':
-                    host = data[1]
+                    host = socket.gethostbyname(data[1])
                 if data[0] == 'PORT':
                     port = int(data[1])
         self.s.connect((host, port))
         self.s.setblocking(False)
         self.send_data_id = 0
         self.recv_data = ''
-        self.pre_mouse_x = pyxel.mouse_x
-        self.pre_mouse_y = pyxel.mouse_y
+        self.pre_mouse_x = min(max(pyxel.mouse_x, 0), WINDOW_SIZE)
+        self.pre_mouse_y = min(max(pyxel.mouse_y, 0), WINDOW_SIZE)
         self.drawing = False
         self.state = 'lobby'
         self.room_number = ''
@@ -64,7 +64,8 @@ class App:
         elif self.state == 'room':
             if pyxel.btn(pyxel.MOUSE_LEFT_BUTTON):
                 if self.drawing:
-                    sx, sy = pyxel.mouse_x, pyxel.mouse_y
+                    sx, sy = min(max(pyxel.mouse_x, 0), WINDOW_SIZE), min(max(pyxel.mouse_y, 0), WINDOW_SIZE)
+                    print(sx, sy)
                     gx, gy = self.pre_mouse_x, self.pre_mouse_y
                     dx, dy = sx - gx, sy - gy
                     if abs(dx) >= abs(dy):
@@ -98,12 +99,12 @@ class App:
                                     tx = int(dx / dy * (ty - sy) + sx - 0.5)
                                 self.draw_pixel(tx, ty)
                 else:
-                    self.draw_pixel(pyxel.mouse_x, pyxel.mouse_y)
+                    self.draw_pixel(min(max(pyxel.mouse_x, 0), WINDOW_SIZE), min(max(pyxel.mouse_y, 0), WINDOW_SIZE))
                     self.drawing = True
             else:
                 self.drawing = True
-            self.pre_mouse_x = pyxel.mouse_x
-            self.pre_mouse_y = pyxel.mouse_y
+            self.pre_mouse_x = min(max(pyxel.mouse_x, 0), WINDOW_SIZE)
+            self.pre_mouse_y = min(max(pyxel.mouse_y, 0), WINDOW_SIZE)
 
             self.color += pyxel.mouse_wheel
             self.color = self.color % 16
@@ -145,7 +146,7 @@ class App:
                 pyxel.pset(*p[1:])
             if pyxel.frame_count % 10 < 5:
                 for i, j in ((0, 1), (1, 0), (0, -1), (-1, 0)):
-                    pyxel.pset(pyxel.mouse_x + i, pyxel.mouse_y + j, self.color)
+                    pyxel.pset(min(max(pyxel.mouse_x, 0), WINDOW_SIZE) + i, min(max(pyxel.mouse_y, 0), WINDOW_SIZE) + j, self.color)
 
     def load_canvas(self):
         load_success = False
@@ -157,8 +158,8 @@ class App:
                     self.recv_data = self.recv_data[self.recv_data.find('\n') + 1:]
                     load_success = True
                     data = data.split(' ')
-                    for i in range(WINDOW_SIZE):
-                        self.canvas[i] = data[WINDOW_SIZE * i:WINDOW_SIZE * (i + 1) + 1]
+                    for i in range(WINDOW_SIZE + 1):
+                        self.canvas[i] = data[(WINDOW_SIZE + 1) * i:(WINDOW_SIZE + 1) * (i + 1) + 1]
             except BlockingIOError:
                 pass
 
