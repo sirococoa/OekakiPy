@@ -16,8 +16,8 @@ Pyxelを使った複数人での同時お絵描きゲームです。
 以下の環境で動作を確認しています。
 
 * python 3.8.6
-* pyxel 1.4.3 (client)
-* Ywisted 20.3.0 (server)
+* pyxel 1.4.3 (client only)
+* Twisted 20.3.0 (server only)
  
 ## Installation
  
